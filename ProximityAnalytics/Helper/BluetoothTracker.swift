@@ -35,7 +35,6 @@ let kNotificationPeripheralConnected = NSNotification.Name(rawValue: "com.humphr
 let kNotificationPeripheralDisconnected = NSNotification.Name(rawValue: "com.humphriesj.proximity-analytics.notification.peripheralDisconnected")
 
 
-
 class DiscoveredPeripheral {
     let identifier: String
     let name: String
@@ -65,14 +64,6 @@ class BlueToothTracker: NSObject {
     //static let helloServiceUUID = "D51BE279-655A-4413-815E-5F560681C2D0"
     static let helloServiceUUID = "655A"
     let beviiBTHelloServiceCBUUID = CBUUID(string: helloServiceUUID)
-    // hello service -> ID characteristic
-    //static let helloIDCharacteristicUUID = "EEBEA6C5-28B1-45E5-90F8-EA9A1AAB9B64"
-    static let helloIDCharacteristicUUID = "28B1"
-    let beviiBTHelloIDCharacteristicCBUUID = CBUUID(string: helloIDCharacteristicUUID)
-    // hello service -> Notify characteristic
-    //static let helloNotifyCharacteristicUUID = "B8CE525D-0447-4AA5-8446-313DC65FA372"
-    static let helloNotifyCharacteristicUUID = "0447"
-    let beviiBTHelloNotifyCharacteristicCBUUID = CBUUID(string: helloNotifyCharacteristicUUID)
     
     var characteristic: CBMutableCharacteristic?
     var service: CBMutableService?
@@ -230,18 +221,10 @@ extension BlueToothTracker: CBPeripheralDelegate {
             if let characteristics = service.characteristics {
                 // 6)
                 for char in characteristics {
-                    if char.uuid == self.beviiBTHelloIDCharacteristicCBUUID {
-                        // read the characteristic just once, as it will not continue to update
-                        print("-- btsk << 6 >> peripheral.readValue(for: char) - char: \(char)")
-                        peripheral.readValue(for: char)
-                    } else if char.uuid == self.beviiBTHelloNotifyCharacteristicCBUUID {
-                        // subscribe to updates for this characteristic, as it will continue to update
-                        print("-- btsk << 6 >> peripheral.setNotifyValue(true) - char: \(char)")
-                        peripheral.setNotifyValue(true, for: char)
-                    } else if char.uuid == self.beviiBTHelloServiceCBUUID {
+                    if char.uuid == self.beviiBTHelloServiceCBUUID {
                         print("-- btsk << 6 >> peripheral.setNotifyValue(true) AND peripheral.readValue(for: char) - char: \(char)")
-                        peripheral.setNotifyValue(true, for: char) // "tell us when something changes"
                         peripheral.readValue(for: char) // "read the latest value"
+                        peripheral.setNotifyValue(true, for: char) // "tell us when something changes"
                     }
                 }
             }
@@ -256,11 +239,7 @@ extension BlueToothTracker: CBPeripheralDelegate {
         // 7)
         print("-- btsk - CALLING readRSSI()")
         peripheral.readRSSI()
-        if characteristic.uuid == self.beviiBTHelloIDCharacteristicCBUUID {
-            print("-- btsk << 7 >> peripheral didUpdateValueForChar \(String(describing: characteristic.value)), peripheral: \(peripheral.identifier.uuidString.prefix(4))")
-        } else if characteristic.uuid == self.beviiBTHelloNotifyCharacteristicCBUUID {
-            print("-- btsk << 7 >> peripheral didUpdateValueForChar \(String(describing: characteristic.value)), peripheral: \(peripheral.identifier.uuidString.prefix(4))")
-        } else if characteristic.uuid == self.beviiBTHelloServiceCBUUID {
+        if characteristic.uuid == self.beviiBTHelloServiceCBUUID {
             if let characteristicData = characteristic.value {
                 let resultValue = [UInt8](characteristicData)
                 let stringFromData = NSString(data: characteristicData, encoding: String.Encoding.utf8.rawValue)
@@ -357,7 +336,11 @@ extension BlueToothTracker: CBPeripheralManagerDelegate {
             self.service = CBMutableService(type: self.beviiBTHelloServiceCBUUID, primary: true)
             self.service!.characteristics = [self.characteristic!]
             self.btPeripheralManager?.add(self.service!)
-            let advertisementDict = [ CBAdvertisementDataServiceUUIDsKey : [self.service!.uuid], CBAdvertisementDataLocalNameKey: "Jason Device \(arc4random_uniform(100))" ] as [String : Any]
+            var myDeviceName = "Device \(arc4random_uniform(100))"
+            if let myName = DataStore.getMyBluetoothPeripheralName() {
+                myDeviceName = myName
+            }
+            let advertisementDict = [ CBAdvertisementDataServiceUUIDsKey : [self.service!.uuid], CBAdvertisementDataLocalNameKey: myDeviceName ] as [String : Any]
             print("-- btsk (p) - Added Service & Started Advertising. dict: \(advertisementDict)")
             self.btPeripheralManager?.startAdvertising(advertisementDict)
         }

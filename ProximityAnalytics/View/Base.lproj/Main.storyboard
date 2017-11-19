@@ -99,6 +99,7 @@
                     <tabBarItem key="tabBarItem" title="Proximity" image="first" id="acW-dT-cKf"/>
                     <connections>
                         <outlet property="bluetoothSwitch" destination="K2S-er-vOY" id="1ct-Oj-Wxn"/>
+                        <outlet property="navBar" destination="TEq-We-eEL" id="XW0-il-QxE"/>
                         <outlet property="tableView" destination="xKL-aV-orZ" id="3BQ-k0-hKD"/>
                     </connections>
                 </viewController>

@@ -13,6 +13,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
 
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var bluetoothSwitch: UISwitch!
+    @IBOutlet weak var navBar: UINavigationBar!
     var peripheralConnectedObserver: NSObjectProtocol?
     var peripheralDisconnectedObserver: NSObjectProtocol?
     var peripheralNames: [String] = []
@@ -24,6 +25,35 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         self.addPeripheralConnectionChangeNotificationObservers()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if let myName = DataStore.getMyBluetoothPeripheralName() {
+            let titleLabel = UILabel(frame: CGRect.zero)
+            titleLabel.text = myName
+            titleLabel.sizeToFit()
+            self.navBar.topItem?.titleView = titleLabel
+        } else {
+            // prompt for name
+            let nameAlertCon = UIAlertController(title: "Enter your name", message: nil, preferredStyle: .alert)
+            let inputAction = UIAlertAction(title: "Save", style: .default, handler: { alert in
+                let textField = nameAlertCon.textFields![0] as UITextField
+                if let text = textField.text {
+                    DataStore.saveMyBluetoothPeripheralName(text)
+                    let titleLabel = UILabel(frame: CGRect.zero)
+                    titleLabel.text = text
+                    titleLabel.sizeToFit()
+                    self.navBar.topItem?.titleView = titleLabel
+                }
+            })
+            nameAlertCon.addAction(inputAction)
+            nameAlertCon.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+            nameAlertCon.addTextField(configurationHandler: { textField in
+                textField.placeholder = "Name"
+            })
+            self.present(nameAlertCon, animated: true, completion: nil)
+        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
