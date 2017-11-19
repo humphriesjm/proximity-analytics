@@ -30,14 +30,22 @@ import Foundation
 //          - How can we use these numbers to determine where the phone is on a person?
 //          - Can we detect direction?
 
+
+let kNotificationPeripheralConnected = NSNotification.Name(rawValue: "com.humphriesj.proximity-analytics.notification.peripheralConnected")
+let kNotificationPeripheralDisconnected = NSNotification.Name(rawValue: "com.humphriesj.proximity-analytics.notification.peripheralDisconnected")
+
+
+
 class DiscoveredPeripheral {
     let identifier: String
+    let name: String
     let peripheral: CBPeripheral
     var rssiValues: [Int]
     var timeValues: [Double]
     
-    init(identifier: String, peripheral: CBPeripheral, rssiValues: [Int], timeValues: [Double]) {
+    init(identifier: String, name: String, peripheral: CBPeripheral, rssiValues: [Int], timeValues: [Double]) {
         self.identifier = identifier
+        self.name = name
         self.peripheral = peripheral
         self.rssiValues = rssiValues
         self.timeValues = timeValues
@@ -149,7 +157,7 @@ extension BlueToothTracker: CBCentralManagerDelegate {
         } else {
             peripheral.delegate = self
             let deviceName = (advertisementData as NSDictionary).object(forKey: CBAdvertisementDataLocalNameKey) as? String
-            let discoveredPeripheral = DiscoveredPeripheral(identifier: peripheral.identifier.uuidString, peripheral: peripheral, rssiValues: [RSSI.intValue], timeValues: [Date().timeIntervalSince1970])
+            let discoveredPeripheral = DiscoveredPeripheral(identifier: peripheral.identifier.uuidString, name: deviceName ?? String(peripheral.identifier.uuidString.prefix(4)), peripheral: peripheral, rssiValues: [RSSI.intValue], timeValues: [Date().timeIntervalSince1970])
             self.peripherals?.append(discoveredPeripheral)
             print("-- btsk << 3 >> connect(peripheral) - name: \(deviceName ?? "no name :(") -- peripheral id: \(peripheral.identifier.uuidString.prefix(4))")
             self.btCentralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey : true])
@@ -163,6 +171,12 @@ extension BlueToothTracker: CBCentralManagerDelegate {
             // 4)
             print("-- btsk << 4 >> discoverServices()")
             peripheral.discoverServices([self.beviiBTHelloServiceCBUUID])
+            var peripheralName = String(peripheral.identifier.uuidString.prefix(4))
+            let desiredPeripheral = self.peripherals?.filter({ $0.identifier == peripheral.identifier.uuidString }).first
+            if let p = desiredPeripheral {
+                peripheralName = p.name
+            }
+            NotificationCenter.default.post(name: kNotificationPeripheralConnected, object: self, userInfo: [ "peripheralName" : peripheralName ])
         } else {
             print("-- btsk - didConnect peripheral - peripheral.state != .connected \(peripheral.state)")
         }
@@ -179,6 +193,12 @@ extension BlueToothTracker: CBCentralManagerDelegate {
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("-- btsk - didDisconnectPeripheral. peripheral: \(peripheral.description); error: \(String(describing: error?.localizedDescription))")
+        var peripheralName = String(peripheral.identifier.uuidString.prefix(4))
+        let desiredPeripheral = self.peripherals?.filter({ $0.identifier == peripheral.identifier.uuidString }).first
+        if let p = desiredPeripheral {
+            peripheralName = p.name
+        }
+        NotificationCenter.default.post(name: kNotificationPeripheralDisconnected, object: self, userInfo: [ "peripheralName" : peripheralName ])
         //print("-- btsk - CALLING connect(peripheral) AGAIN BECAUSE IT DISCONNECTED")
         //self.btCentralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey : true])
     }
