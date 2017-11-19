@@ -30,6 +30,24 @@ import Foundation
 //          - How can we use these numbers to determine where the phone is on a person?
 //          - Can we detect direction?
 
+class DiscoveredPeripheral {
+    let identifier: String
+    let peripheral: CBPeripheral
+    var rssiValues: [Int]
+    var timeValues: [Double]
+    
+    init(identifier: String, peripheral: CBPeripheral, rssiValues: [Int], timeValues: [Double]) {
+        self.identifier = identifier
+        self.peripheral = peripheral
+        self.rssiValues = rssiValues
+        self.timeValues = timeValues
+    }
+    
+    func rssiAverage() -> Int {
+        return self.rssiValues.isEmpty ? 0 : self.rssiValues.reduce(0,+) / self.rssiValues.count
+    }
+}
+
 class BlueToothTracker: NSObject {
     static let sharedInstance: BlueToothTracker = {
         return BlueToothTracker()
@@ -53,11 +71,14 @@ class BlueToothTracker: NSObject {
     
     public var isCentralRunning: Bool = false
     public var isPeripheralRunning: Bool = false
+    var rssiReadTimer: Timer?
     
     var btCentralManager: CBCentralManager?
     var btPeripheralManager: CBPeripheralManager?
-    //var peripherals: [CBPeripheral] = []
-    var peripheral: CBPeripheral?
+    
+    var peripherals: [DiscoveredPeripheral]? = []
+    
+    var valueData: NSMutableData?
     
     fileprivate override init() {
         super.init()
@@ -66,22 +87,30 @@ class BlueToothTracker: NSObject {
     
     func startBluetoothCentral() {
         // 1)
-        let opts = [CBCentralManagerOptionShowPowerAlertKey: true]
-        self.btCentralManager = CBCentralManager(delegate: self, queue: nil, options: opts)
-        print("-- startBluetoothCentral() -- btCentralManager created -")
-        self.isCentralRunning = true
+        if self.btCentralManager == nil {
+            let opts = [CBCentralManagerOptionShowPowerAlertKey: true, CBCentralManagerOptionRestoreIdentifierKey: "bluetoothCentralRestoreKey"] as [String : Any]
+            self.btCentralManager = CBCentralManager(delegate: self, queue: nil, options: opts)
+            print("-- btsk << 1 >> startBluetoothCentral() -- btCentralManager created -")
+            self.isCentralRunning = true
+        }
     }
     
     func startBluetoothPeripheral() {
-        self.btPeripheralManager = CBPeripheralManager(delegate: self, queue: nil)
-        print("-- startBluetoothPeripheral() -- btPeripheralManager created -")
-        self.isPeripheralRunning = true
+        if self.btPeripheralManager == nil {
+            self.btPeripheralManager = CBPeripheralManager(delegate: self, queue: nil)
+            print("-- startBluetoothPeripheral() -- btPeripheralManager created -")
+            self.isPeripheralRunning = true
+        }
     }
     
     func updateCharacteristicValue() {
+        guard let char = self.characteristic else {
+            print("*** ERROR: self.characteristic is nil!!")
+            return
+        }
         let data = "Hello Friend!".data(using: .utf8)
-        self.characteristic?.value = data!
-        self.btPeripheralManager?.updateValue(data!, for: self.characteristic!, onSubscribedCentrals: nil)
+        char.value = data!
+        self.btPeripheralManager?.updateValue(data!, for: char, onSubscribedCentrals: nil)
     }
 }
 
@@ -97,31 +126,45 @@ extension BlueToothTracker: CBCentralManagerDelegate {
             // 2)
             let scanOptions = [ CBCentralManagerScanOptionAllowDuplicatesKey : true]
             self.btCentralManager?.scanForPeripherals(withServices: [self.beviiBTHelloServiceCBUUID], options: scanOptions)
-            print("-- btsk - didUpdateState. btCentralManager scanning -")
+            print("-- btsk << 2 >> - scanForPeripherals()")
         } else {
-            print("-- btsk - didUpdateState. btCentralManager NOT scanning -")
+            print("-- btsk - NOT scanning -")
         }
     }
     
-    // 3)
+    //  (called on the queue given when CBCentralManager is created)  (advertisementData is from the manufacturer)
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
-        print("-- btsk - didDiscover peripheral: \(peripheral.description); RSSI: \(RSSI); RSSI.stringValue: \(RSSI.stringValue); advertisementData: \(advertisementData)")
+        // 3)
+        guard RSSI.intValue != 127 else { return }
+        let txPower = (advertisementData as NSDictionary).object(forKey: CBAdvertisementDataTxPowerLevelKey) as? String
+        assert(txPower == nil, "txPower is NOT NIL!?!?!")
+        print("-- btsk - didDiscover peripheral: \(String(peripheral.identifier.uuidString.prefix(4))); RSSI: \(RSSI)")
         
-        // 4)
-        self.peripheral = peripheral
-        self.btCentralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey : true])
+        let desiredPeripheral = self.peripherals?.filter({ $0.identifier == peripheral.identifier.uuidString }).first
+        if desiredPeripheral != nil && desiredPeripheral?.peripheral.state != .disconnected {
+            desiredPeripheral!.rssiValues.append(RSSI.intValue)
+            desiredPeripheral!.timeValues.append(Date().timeIntervalSince1970)
+            print("-- btsk - updated LocalPeripheral. RSSI average: \(desiredPeripheral!.rssiAverage())")
+            return
+        } else {
+            peripheral.delegate = self
+            let deviceName = (advertisementData as NSDictionary).object(forKey: CBAdvertisementDataLocalNameKey) as? String
+            let discoveredPeripheral = DiscoveredPeripheral(identifier: peripheral.identifier.uuidString, peripheral: peripheral, rssiValues: [RSSI.intValue], timeValues: [Date().timeIntervalSince1970])
+            self.peripherals?.append(discoveredPeripheral)
+            print("-- btsk << 3 >> connect(peripheral) - name: \(deviceName ?? "no name :(") -- peripheral id: \(peripheral.identifier.uuidString.prefix(4))")
+            self.btCentralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey : true])
+        }
     }
     
-    // 5)
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         // CONNECTION ESTABLISHED TO PERIPHERAL
-        print("-- btsk - didConnect peripheral with identifier(\(peripheral.identifier)) and name(\(peripheral.name ?? "no name"))")
-        peripheral.delegate = self
+        print("-- btsk - didConnect peripheral. identifier: (\(peripheral.identifier)); name: (\(peripheral.name ?? "no name"))")
         if peripheral.state == .connected {
-            // 6)
+            // 4)
+            print("-- btsk << 4 >> discoverServices()")
             peripheral.discoverServices([self.beviiBTHelloServiceCBUUID])
         } else {
-            print("-- btsk - didConnect. peripheral - peripheral.state != .connected \(peripheral.state)")
+            print("-- btsk - didConnect peripheral - peripheral.state != .connected \(peripheral.state)")
         }
     }
     
@@ -136,7 +179,8 @@ extension BlueToothTracker: CBCentralManagerDelegate {
     
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         print("-- btsk - didDisconnectPeripheral. peripheral: \(peripheral.description); error: \(String(describing: error?.localizedDescription))")
-        self.btCentralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey : true])
+        //print("-- btsk - CALLING connect(peripheral) AGAIN BECAUSE IT DISCONNECTED")
+        //self.btCentralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey : true])
     }
     
 }
@@ -149,37 +193,35 @@ extension BlueToothTracker: CBCentralManagerDelegate {
 
 extension BlueToothTracker: CBPeripheralDelegate {
     
-    // 7)
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         print("-- btsk - \(#function)")
         if let services = peripheral.services {
-            print("-- btsk - didDiscoverServices: \(services)")
             for service in services {
-                // 8)
-                print("-- btsk - discoverCharacteristics for service: \(service)")
+                // 5)
+                print("-- btsk << 5 >> discoverCharacteristics() - service: \(service)")
                 peripheral.discoverCharacteristics([self.beviiBTHelloServiceCBUUID], for: service)
             }
         }
     }
     
-    // 9)
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         print("-- btsk - \(#function)")
         if service.uuid == self.beviiBTHelloServiceCBUUID {
             if let characteristics = service.characteristics {
+                // 6)
                 for char in characteristics {
                     if char.uuid == self.beviiBTHelloIDCharacteristicCBUUID {
-                        // 10a)
                         // read the characteristic just once, as it will not continue to update
+                        print("-- btsk << 6 >> peripheral.readValue(for: char) - char: \(char)")
                         peripheral.readValue(for: char)
                     } else if char.uuid == self.beviiBTHelloNotifyCharacteristicCBUUID {
-                        // 10b)
                         // subscribe to updates for this characteristic, as it will continue to update
+                        print("-- btsk << 6 >> peripheral.setNotifyValue(true) - char: \(char)")
                         peripheral.setNotifyValue(true, for: char)
                     } else if char.uuid == self.beviiBTHelloServiceCBUUID {
-                        // 10c)
-                        peripheral.setNotifyValue(true, for: char)
-                        peripheral.readValue(for: char)
+                        print("-- btsk << 6 >> peripheral.setNotifyValue(true) AND peripheral.readValue(for: char) - char: \(char)")
+                        peripheral.setNotifyValue(true, for: char) // "tell us when something changes"
+                        peripheral.readValue(for: char) // "read the latest value"
                     }
                 }
             }
@@ -188,37 +230,70 @@ extension BlueToothTracker: CBPeripheralDelegate {
         }
     }
     
+    // NOTE: iOS won't tell us if this is NOTIFY or READ
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         print("-- btsk - \(#function)")
-        // 11)
+        // 7)
+        print("-- btsk - CALLING readRSSI()")
         peripheral.readRSSI()
         if characteristic.uuid == self.beviiBTHelloIDCharacteristicCBUUID {
-            print("-- btsk - peripheral didUpdateValueForChar \(String(describing: characteristic.value))")
+            print("-- btsk << 7 >> peripheral didUpdateValueForChar \(String(describing: characteristic.value)), peripheral: \(peripheral.identifier.uuidString.prefix(4))")
         } else if characteristic.uuid == self.beviiBTHelloNotifyCharacteristicCBUUID {
-            print("-- btsk - peripheral didUpdateValueForChar \(String(describing: characteristic.value))")
+            print("-- btsk << 7 >> peripheral didUpdateValueForChar \(String(describing: characteristic.value)), peripheral: \(peripheral.identifier.uuidString.prefix(4))")
         } else if characteristic.uuid == self.beviiBTHelloServiceCBUUID {
-            print("-- btsk - peripheral didUpdateValueForChar \(String(describing: characteristic.value))")
+            if let characteristicData = characteristic.value {
+                let resultValue = [UInt8](characteristicData)
+                let stringFromData = NSString(data: characteristicData, encoding: String.Encoding.utf8.rawValue)
+                print("-- btsk << 7 >> peripheral didUpdateValueForChar \(String(describing: characteristicData)) \nresultValue: \(resultValue) \nString(data): \(stringFromData ?? "stringFromData error"), peripheral: \(peripheral.identifier.uuidString.prefix(4))")
+            } else {
+                print("-- btsk << 7 >> peripheral didUpdateValueForChar (NO CHAR.VALUE DATA) \(String(describing: characteristic)), peripheral: \(peripheral.identifier.uuidString.prefix(4))")
+            }
         }
-    }
-    
-    func peripheralDidUpdateName(_ peripheral: CBPeripheral) {
-        print("-- btsk - \(#function)")
-    }
-    
-    func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
-        print("-- btsk - \(#function)")
+        
+        self.rssiReadTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { timer in
+            if peripheral.state == .connected {
+                print("-- btsk - CALLING readRSSI() IN LOOP")
+                peripheral.readRSSI()
+            } else {
+                print("-- btsk - NOT calling readRSSI() IN LOOP. peripheral is not connected. -- peripheral id: \(peripheral.identifier.uuidString.prefix(4))")
+                if self.btCentralManager?.state == .poweredOn {
+                    self.btCentralManager?.cancelPeripheralConnection(peripheral)
+                } else {
+                    print("-- btsk - btCentralManager is not .poweredOn")
+                }
+            }
+        }
+        
+        // additional stuff available on the characteristic:
+        //print("-- btsk - characteristic.properties: \(characteristic.properties)")
+        //print("-- btsk - characteristic.isNotifying: \(characteristic.isNotifying)")
     }
     
     func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
         print("-- btsk - \(#function)")
-        print("-- btsk - **** DID READ RSSI: \(RSSI)")
+        if let discoveredPeripherals = self.peripherals {
+            if let desiredPeripheral = discoveredPeripherals.filter({ $0.identifier == peripheral.identifier.uuidString }).first {
+                if desiredPeripheral.peripheral.state != .disconnected {
+                    desiredPeripheral.rssiValues.append(RSSI.intValue)
+                    desiredPeripheral.timeValues.append(Date().timeIntervalSince1970)
+                    print("-- btsk - updated LocalPeripheral: \(desiredPeripheral.identifier.prefix(4)) -- RSSI average: \(desiredPeripheral.rssiAverage())")
+                } else {
+                    print("-- btsk - desiredPeripheral state != .disconnected")
+                }
+            }
+        }
+        print("-- btsk - ****  DID READ RSSI: \(RSSI)  ****")
     }
-    
-    func peripheral(_ peripheral: CBPeripheral, didDiscoverIncludedServicesFor service: CBService, error: Error?) {
+
+    func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+        print("-- btsk - \(#function)")
+    }
+
+    func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
         print("-- btsk - \(#function)")
     }
     
-    func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverIncludedServicesFor service: CBService, error: Error?) {
         print("-- btsk - \(#function)")
     }
     
@@ -261,10 +336,10 @@ extension BlueToothTracker: CBPeripheralManagerDelegate {
             self.characteristic = CBMutableCharacteristic(type: self.beviiBTHelloServiceCBUUID, properties: [CBCharacteristicProperties.read, CBCharacteristicProperties.notify, CBCharacteristicProperties.indicate, CBCharacteristicProperties.write], value: nil, permissions: [CBAttributePermissions.readable, CBAttributePermissions.writeable])
             self.service = CBMutableService(type: self.beviiBTHelloServiceCBUUID, primary: true)
             self.service!.characteristics = [self.characteristic!]
-            self.btPeripheralManager?.add(service!)
-            let advertisementDict = [ CBAdvertisementDataServiceUUIDsKey : [service!.uuid], CBAdvertisementDataLocalNameKey: "Jason Device \(arc4random_uniform(10))" ] as [String : Any]
+            self.btPeripheralManager?.add(self.service!)
+            let advertisementDict = [ CBAdvertisementDataServiceUUIDsKey : [self.service!.uuid], CBAdvertisementDataLocalNameKey: "Jason Device \(arc4random_uniform(100))" ] as [String : Any]
+            print("-- btsk (p) - Added Service & Started Advertising. dict: \(advertisementDict)")
             self.btPeripheralManager?.startAdvertising(advertisementDict)
-            print("-- btsk (p) - didUpdateState. Added Service & Started Advertising. dict: \(advertisementDict)")
         }
     }
     
@@ -277,22 +352,23 @@ extension BlueToothTracker: CBPeripheralManagerDelegate {
     }
     
     func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
-        print("-- btsk (p) - didAdd service. service: \(service.description); error: \(String(describing: error?.localizedDescription))")
+        print("-- btsk - \(#function)")
         if error != nil {
             print("-- btsk (p) didAdd service. ERROR: \(error?.localizedDescription ?? "?")")
             return
         }
-        print("-- btsk (p) didAdd service \(self.beviiBTHelloServiceCBUUID.uuidString). SUCCESS")
+        print("-- btsk (p) didAdd service \(service.uuid) - \(service.description) -- SUCCESS")
     }
     
     func peripheralManager(peripheral: CBPeripheralManager!, didReceiveReadRequest request: CBATTRequest!) {
-        NSLog("peripheralManager didReceiveReadRequest for characteristic %@", self.characteristic!)
-        
-        if request.characteristic.uuid.isEqual(characteristic?.uuid) {
+        print("-- btsk - \(#function)")
+
+        if request.characteristic.uuid.isEqual(self.characteristic?.uuid) {
             // Set the correspondent characteristic's value to the request
             request.value = self.characteristic?.value
             
             // Respond to the request
+            print("-- btsk (p) respond(to request)")
             self.btPeripheralManager?.respond(to: request, withResult: .success)
         }
         
