@@ -9,23 +9,25 @@
 /* Begin PBXBuildFile section */
 		717D8D021FC0E7ED00821DE8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D011FC0E7ED00821DE8 /* AppDelegate.swift */; };
 		717D8D041FC0E7ED00821DE8 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */; };
-		717D8D061FC0E7ED00821DE8 /* BluetoothViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D051FC0E7ED00821DE8 /* BluetoothViewController.swift */; };
 		717D8D091FC0E7ED00821DE8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 717D8D071FC0E7ED00821DE8 /* Main.storyboard */; };
 		717D8D0B1FC0E7ED00821DE8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 717D8D0A1FC0E7ED00821DE8 /* Assets.xcassets */; };
 		717D8D0E1FC0E7ED00821DE8 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 717D8D0C1FC0E7ED00821DE8 /* LaunchScreen.storyboard */; };
 		717D8D161FC0E8B200821DE8 /* BluetoothTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D151FC0E8B200821DE8 /* BluetoothTracker.swift */; };
+		717D8D1B1FC0F45300821DE8 /* StatsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D1A1FC0F45300821DE8 /* StatsViewController.swift */; };
+		717D8D1D1FC11C3500821DE8 /* BeaconTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D1C1FC11C3500821DE8 /* BeaconTracker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		717D8CFE1FC0E7ED00821DE8 /* ProximityAnalytics.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProximityAnalytics.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		717D8D011FC0E7ED00821DE8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
-		717D8D051FC0E7ED00821DE8 /* BluetoothViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothViewController.swift; sourceTree = "<group>"; };
 		717D8D081FC0E7ED00821DE8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		717D8D0A1FC0E7ED00821DE8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		717D8D0D1FC0E7ED00821DE8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		717D8D0F1FC0E7ED00821DE8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		717D8D151FC0E8B200821DE8 /* BluetoothTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BluetoothTracker.swift; sourceTree = "<group>"; };
+		717D8D1A1FC0F45300821DE8 /* StatsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StatsViewController.swift; sourceTree = "<group>"; };
+		717D8D1C1FC11C3500821DE8 /* BeaconTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeaconTracker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +73,7 @@
 		717D8D171FC0E96400821DE8 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				717D8D1C1FC11C3500821DE8 /* BeaconTracker.swift */,
 				717D8D011FC0E7ED00821DE8 /* AppDelegate.swift */,
 				717D8D151FC0E8B200821DE8 /* BluetoothTracker.swift */,
 			);
@@ -81,7 +84,7 @@
 			isa = PBXGroup;
 			children = (
 				717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */,
-				717D8D051FC0E7ED00821DE8 /* BluetoothViewController.swift */,
+				717D8D1A1FC0F45300821DE8 /* StatsViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -163,8 +166,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				717D8D061FC0E7ED00821DE8 /* BluetoothViewController.swift in Sources */,
 				717D8D021FC0E7ED00821DE8 /* AppDelegate.swift in Sources */,
+				717D8D1B1FC0F45300821DE8 /* StatsViewController.swift in Sources */,
+				717D8D1D1FC11C3500821DE8 /* BeaconTracker.swift in Sources */,
 				717D8D041FC0E7ED00821DE8 /* HomeViewController.swift in Sources */,
 				717D8D161FC0E8B200821DE8 /* BluetoothTracker.swift in Sources */,
 			);

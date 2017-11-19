@@ -8,12 +8,11 @@
 
 import UIKit
 
-class BluetoothViewController: UIViewController {
-
+class StatsViewController: UIViewController {
+    
     override func viewDidLoad() {
         super.viewDidLoad()
     }
-
-
+    
 }
 
