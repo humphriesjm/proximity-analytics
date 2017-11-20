@@ -16,8 +16,8 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet weak var navBar: UINavigationBar!
     var peripheralConnectedObserver: NSObjectProtocol?
     var peripheralDisconnectedObserver: NSObjectProtocol?
-    var peripheralNames: [String] = []
-    
+    var peripheralRSSIUpdatedObserver: NSObjectProtocol?
+
     override func viewDidLoad() {
         super.viewDidLoad()
     }
@@ -74,16 +74,18 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.peripheralNames.count
+        return DataStore.sharedInstance.getDiscoveredPeripherals().count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "nodeCell", for: indexPath)
         cell.textLabel?.text = ""
         cell.detailTextLabel?.text = ""
-        if !self.peripheralNames.isEmpty {
-            cell.textLabel?.text = self.peripheralNames[indexPath.row]
-            //cell.detailTextLabel?.text = "Strength:"
+        let peripherals = DataStore.sharedInstance.getDiscoveredPeripherals()
+        if peripherals.count > indexPath.row {
+            let peripheral = peripherals[indexPath.row]
+            cell.textLabel?.text = "\(peripheral.name) - \(peripheral.identifier.prefix(4))"
+            cell.detailTextLabel?.text = "RSSI: \(peripheral.rssiAverage())"
         }
         return cell
     }
@@ -102,33 +104,30 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
                                                                                      object: nil,
                                                                                      queue: nil,
                                                                                      using: peripheralDisconnectedNotification)
+        self.peripheralRSSIUpdatedObserver = NotificationCenter.default.addObserver(forName: kNotificationPeripheralRSSIUpdate,
+                                                                                    object: nil,
+                                                                                    queue: nil,
+                                                                                    using: peripheralRSSIUpdateNotification)
     }
     
     func removePeripheralConnectionChangeNotificationObservers() {
         NotificationCenter.default.removeObserver(self.peripheralConnectedObserver as Any)
         NotificationCenter.default.removeObserver(self.peripheralDisconnectedObserver as Any)
+        NotificationCenter.default.removeObserver(self.peripheralRSSIUpdatedObserver as Any)
     }
     
     func peripheralConnectedNotification(notification: Notification) {
         print("- peripheralConnectedNotification, userInfo: \(String(describing: notification.userInfo ?? [:]))")
-        if let peripheralName = notification.userInfo!["peripheralName"] as? String {
-            if !self.peripheralNames.contains(peripheralName) {
-                self.peripheralNames.append(peripheralName)
-                self.tableView.reloadData()
-            }
-        }
+        self.tableView.reloadData()
     }
     
     func peripheralDisconnectedNotification(notification: Notification) {
         print("- peripheralDisconnectedNotification, userInfo: \(String(describing: notification.userInfo ?? [:]))")
-        if let peripheralName = notification.userInfo!["peripheralName"] as? String {
-            if self.peripheralNames.contains(peripheralName) {
-                if let x = self.peripheralNames.index(of: peripheralName) {
-                    self.peripheralNames.remove(at: x)
-                    self.tableView.reloadData()
-                }
-            }
-        }
+        self.tableView.reloadData()
+    }
+    
+    func peripheralRSSIUpdateNotification(notification: Notification) {
+        self.tableView.reloadData()
     }
 
 

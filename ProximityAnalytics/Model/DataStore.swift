@@ -8,7 +8,38 @@
 
 import Foundation
 
-class DataStore {
+class DataStore: NSObject {
+    
+    static let sharedInstance: DataStore = {
+        return DataStore()
+    }()
+    
+    //MARK: DiscoveredPeripherals
+    
+    private var discoveredPeripherals: [DiscoveredPeripheral] = []
+    
+    func addDiscoveredPeripheral(_ peripheral: DiscoveredPeripheral) {
+        let desiredPeripheral = self.discoveredPeripherals.filter({ $0.identifier == peripheral.identifier }).first
+        if desiredPeripheral == nil {
+            self.discoveredPeripherals.append(peripheral)
+        }
+    }
+    
+    func getDiscoveredPeripherals() -> [DiscoveredPeripheral] {
+        return self.discoveredPeripherals
+    }
+    
+    func removeDiscoveredPeripheral(_ peripheral: DiscoveredPeripheral) {
+        let x = self.discoveredPeripherals.index { p -> Bool in
+            return p.identifier == peripheral.identifier
+        }
+        guard let pIndex = x else { return }
+        self.discoveredPeripherals.remove(at: pIndex)
+    }
+    
+    
+    //MARK: UserDefaults
+    
     static let userDefaults = UserDefaults.standard
     
     static func saveMyBluetoothPeripheralName(_ name: String) {
@@ -22,33 +53,4 @@ class DataStore {
         }
         return nil
     }
-    
-//    static func addSearchTermToHistory(_ term: String) {
-//        var searchHistory = userDefaults.array(forKey: Constants.SearchHistoryUserDefaultsKey) as? [String]
-//        if searchHistory != nil {
-//            // terms exist in search history -- prevent dupes
-//            if searchHistory!.contains(term) == false {
-//                searchHistory!.append(term)
-//            }
-//            self.saveSearchHistoryArray(searchHistory: searchHistory!)
-//        } else {
-//            // no terms exist yet in search history. create new search history with new term.
-//            userDefaults.set([term], forKey: Constants.SearchHistoryUserDefaultsKey)
-//            userDefaults.synchronize()
-//        }
-//    }
-    
-//    static func getSearchHistory() -> [String]? {
-//        if let searchHistory = userDefaults.array(forKey: Constants.SearchHistoryUserDefaultsKey) as? [String] {
-//            return searchHistory
-//        }
-//        return nil
-//    }
-    
-//    static func getLastSearchTerm() -> String? {
-//        if let currentSearchHistory = self.getSearchHistory() {
-//            return currentSearchHistory.last
-//        }
-//        return nil
-//    }
 }

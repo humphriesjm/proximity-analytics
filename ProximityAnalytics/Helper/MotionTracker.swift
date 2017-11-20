@@ -15,5 +15,8 @@ class MotionTracker: NSObject {
         return MotionTracker()
     }()
     
+    static let motionManager: CMMotionManager = {
+       return CMMotionManager()
+    }()
     
 }
