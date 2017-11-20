@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7140DB0E1FC289FD006B3196 /* MotionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7140DB0D1FC289FD006B3196 /* MotionViewController.swift */; };
 		717D8D021FC0E7ED00821DE8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D011FC0E7ED00821DE8 /* AppDelegate.swift */; };
 		717D8D041FC0E7ED00821DE8 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */; };
 		717D8D091FC0E7ED00821DE8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 717D8D071FC0E7ED00821DE8 /* Main.storyboard */; };
@@ -21,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		7140DB0D1FC289FD006B3196 /* MotionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionViewController.swift; sourceTree = "<group>"; };
 		717D8CFE1FC0E7ED00821DE8 /* ProximityAnalytics.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProximityAnalytics.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		717D8D011FC0E7ED00821DE8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 		717D8D181FC0E96B00821DE8 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				7140DB0D1FC289FD006B3196 /* MotionViewController.swift */,
 				717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */,
 				717D8D1A1FC0F45300821DE8 /* StatsViewController.swift */,
 			);
@@ -199,6 +202,7 @@
 				717D8D041FC0E7ED00821DE8 /* HomeViewController.swift in Sources */,
 				717D8D161FC0E8B200821DE8 /* BluetoothTracker.swift in Sources */,
 				717D8D231FC1EA2200821DE8 /* Constants.swift in Sources */,
+				7140DB0E1FC289FD006B3196 /* MotionViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
