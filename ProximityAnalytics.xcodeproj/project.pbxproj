@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7140DB0E1FC289FD006B3196 /* MotionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7140DB0D1FC289FD006B3196 /* MotionViewController.swift */; };
+		7140DB101FC4E400006B3196 /* DataLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7140DB0F1FC4E400006B3196 /* DataLogger.swift */; };
 		717D8D021FC0E7ED00821DE8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D011FC0E7ED00821DE8 /* AppDelegate.swift */; };
 		717D8D041FC0E7ED00821DE8 /* HomeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */; };
 		717D8D091FC0E7ED00821DE8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 717D8D071FC0E7ED00821DE8 /* Main.storyboard */; };
@@ -23,6 +24,7 @@
 
 /* Begin PBXFileReference section */
 		7140DB0D1FC289FD006B3196 /* MotionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionViewController.swift; sourceTree = "<group>"; };
+		7140DB0F1FC4E400006B3196 /* DataLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataLogger.swift; sourceTree = "<group>"; };
 		717D8CFE1FC0E7ED00821DE8 /* ProximityAnalytics.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProximityAnalytics.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		717D8D011FC0E7ED00821DE8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		717D8D031FC0E7ED00821DE8 /* HomeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewController.swift; sourceTree = "<group>"; };
@@ -82,6 +84,7 @@
 		717D8D171FC0E96400821DE8 /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				7140DB0F1FC4E400006B3196 /* DataLogger.swift */,
 				717D8D221FC1EA2200821DE8 /* Constants.swift */,
 				717D8D1E1FC190EC00821DE8 /* MotionTracker.swift */,
 				717D8D1C1FC11C3500821DE8 /* BeaconTracker.swift */,
@@ -197,6 +200,7 @@
 				717D8D211FC1E9BF00821DE8 /* DataStore.swift in Sources */,
 				717D8D021FC0E7ED00821DE8 /* AppDelegate.swift in Sources */,
 				717D8D1B1FC0F45300821DE8 /* StatsViewController.swift in Sources */,
+				7140DB101FC4E400006B3196 /* DataLogger.swift in Sources */,
 				717D8D1F1FC190EC00821DE8 /* MotionTracker.swift in Sources */,
 				717D8D1D1FC11C3500821DE8 /* BeaconTracker.swift in Sources */,
 				717D8D041FC0E7ED00821DE8 /* HomeViewController.swift in Sources */,
