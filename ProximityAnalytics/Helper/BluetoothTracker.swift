@@ -36,26 +36,6 @@ let kNotificationPeripheralDisconnected = NSNotification.Name(rawValue: "com.hum
 let kNotificationPeripheralRSSIUpdate = NSNotification.Name(rawValue: "com.humphriesj.proximity-analytics.notification.peripheralRSSIUpdate")
 
 
-class DiscoveredPeripheral {
-    let identifier: String
-    let name: String
-    let peripheral: CBPeripheral
-    var rssiValues: [Int]
-    var timeValues: [Double]
-    
-    init(identifier: String, name: String, peripheral: CBPeripheral, rssiValues: [Int], timeValues: [Double]) {
-        self.identifier = identifier
-        self.name = name
-        self.peripheral = peripheral
-        self.rssiValues = rssiValues
-        self.timeValues = timeValues
-    }
-    
-    func rssiAverage() -> Int {
-        return self.rssiValues.isEmpty ? 0 : self.rssiValues.reduce(0,+) / self.rssiValues.count
-    }
-}
-
 class BlueToothTracker: NSObject {
     static let sharedInstance: BlueToothTracker = {
         return BlueToothTracker()
@@ -147,7 +127,7 @@ extension BlueToothTracker: CBCentralManagerDelegate {
         } else {
             peripheral.delegate = self
             let deviceName = (advertisementData as NSDictionary).object(forKey: CBAdvertisementDataLocalNameKey) as? String
-            let discoveredPeripheral = DiscoveredPeripheral(identifier: peripheral.identifier.uuidString, name: deviceName ?? String(peripheral.identifier.uuidString.prefix(4)), peripheral: peripheral, rssiValues: [RSSI.intValue], timeValues: [Date().timeIntervalSince1970])
+            let discoveredPeripheral = DiscoveredPeripheral(identifier: peripheral.identifier.uuidString, deviceName: deviceName ?? String(peripheral.identifier.uuidString.prefix(4)), peripheral: peripheral, rssiValues: [RSSI.intValue], timeValues: [Date().timeIntervalSince1970])
             DataStore.sharedInstance.addDiscoveredPeripheral(discoveredPeripheral)
             print("-- btsk << 3 >> connect(peripheral) - name: \(deviceName ?? "no name :(") -- peripheral id: \(peripheral.identifier.uuidString.prefix(4))")
             self.btCentralManager?.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey : true])
@@ -164,7 +144,7 @@ extension BlueToothTracker: CBCentralManagerDelegate {
             var peripheralName = String(peripheral.identifier.uuidString.prefix(4))
             let desiredPeripheral = DataStore.sharedInstance.getDiscoveredPeripherals().filter({ $0.identifier == peripheral.identifier.uuidString }).first
             if let p = desiredPeripheral {
-                peripheralName = p.name
+                peripheralName = p.deviceName
             }
             NotificationCenter.default.post(name: kNotificationPeripheralConnected, object: self, userInfo: [ "peripheralName" : peripheralName ])
         } else {
@@ -186,7 +166,7 @@ extension BlueToothTracker: CBCentralManagerDelegate {
         var peripheralName = String(peripheral.identifier.uuidString.prefix(4))
         let desiredPeripheral = DataStore.sharedInstance.getDiscoveredPeripherals().filter({ $0.identifier == peripheral.identifier.uuidString }).first
         if let p = desiredPeripheral {
-            peripheralName = p.name
+            peripheralName = p.deviceName
             DataStore.sharedInstance.removeDiscoveredPeripheral(p)
             NotificationCenter.default.post(name: kNotificationPeripheralDisconnected, object: self, userInfo: [ "peripheralName" : peripheralName ])
         }
@@ -277,7 +257,8 @@ extension BlueToothTracker: CBPeripheralDelegate {
                     desiredPeripheral.rssiValues.append(RSSI.intValue)
                     desiredPeripheral.timeValues.append(Date().timeIntervalSince1970)
                     print("-- btsk - updated LocalPeripheral: \(desiredPeripheral.identifier.prefix(4)) -- RSSI average: \(desiredPeripheral.rssiAverage())")
-                    NotificationCenter.default.post(name: kNotificationPeripheralRSSIUpdate, object: self, userInfo: [ "peripheralName" : desiredPeripheral.name ])
+                    desiredPeripheral.saveDataJSON()
+                    NotificationCenter.default.post(name: kNotificationPeripheralRSSIUpdate, object: self, userInfo: [ "peripheralName" : desiredPeripheral.deviceName ])
                 } else {
                     print("-- btsk - desiredPeripheral state != .disconnected")
                 }

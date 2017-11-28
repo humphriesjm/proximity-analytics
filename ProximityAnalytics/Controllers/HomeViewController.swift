@@ -84,7 +84,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
         let peripherals = DataStore.sharedInstance.getDiscoveredPeripherals()
         if peripherals.count > indexPath.row {
             let peripheral = peripherals[indexPath.row]
-            cell.textLabel?.text = "\(peripheral.name) - \(peripheral.identifier.prefix(4))"
+            cell.textLabel?.text = "\(peripheral.deviceName) - \(peripheral.identifier.prefix(4))"
             cell.detailTextLabel?.text = "RSSI: \(peripheral.rssiAverage())"
         }
         return cell
