@@ -12,6 +12,7 @@ class StatsViewController: UIViewController {
     
     @IBOutlet weak var readDataButton: UIButton!
     @IBOutlet weak var dataTextView: UITextView!
+    @IBOutlet weak var shareBBI: UIBarButtonItem!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,5 +31,24 @@ class StatsViewController: UIViewController {
         }
     }
     
+    @IBAction func readAllDataPressed(_ sender: UIButton) {
+        if let allJSON = DataStore.sharedInstance.readAllDataJSON() {
+            self.dataTextView.text = allJSON
+        } else {
+            self.dataTextView.text = "NO JSON IN FILE"
+        }
+    }
+    
+    @IBAction func shareBBIPressed(_ sender: UIBarButtonItem) {
+        guard let text = self.dataTextView.text else {
+            print("NO TEXT")
+            return
+        }
+        let textToShare = [ text ]
+        let activityViewController = UIActivityViewController(activityItems: textToShare, applicationActivities: nil)
+        activityViewController.popoverPresentationController?.sourceView = self.view
+        activityViewController.excludedActivityTypes = [ UIActivityType.postToFacebook ]
+        self.present(activityViewController, animated: true, completion: nil)
+    }
 }
 

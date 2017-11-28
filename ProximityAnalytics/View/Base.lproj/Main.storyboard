@@ -249,7 +249,13 @@ accuracy:</string>
                                 <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                                 <color key="barTintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <items>
-                                    <navigationItem title="Stats" id="Irm-QY-WJs"/>
+                                    <navigationItem title="Stats" id="Irm-QY-WJs">
+                                        <barButtonItem key="rightBarButtonItem" systemItem="action" id="MCi-RP-C2A">
+                                            <connections>
+                                                <action selector="shareBBIPressed:" destination="8rJ-Kc-sve" id="4g5-0F-Sql"/>
+                                            </connections>
+                                        </barButtonItem>
+                                    </navigationItem>
                                 </items>
                             </navigationBar>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="DAf-Zp-03A">
@@ -263,24 +269,38 @@ accuracy:</string>
                                 </connections>
                             </button>
                             <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="pjV-K3-kv5">
-                                <rect key="frame" x="0.0" y="64" width="375" height="506"/>
+                                <rect key="frame" x="0.0" y="64" width="375" height="466"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9MB-C9-zUl">
+                                <rect key="frame" x="16" y="538" width="343" height="40"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="40" id="6Ah-XA-8pz"/>
+                                    <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="40" id="Nr1-Lh-Maa"/>
+                                </constraints>
+                                <state key="normal" title="Read All Data"/>
+                                <connections>
+                                    <action selector="readAllDataPressed:" destination="8rJ-Kc-sve" eventType="touchUpInside" id="ElM-ew-eAv"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstItem="9MB-C9-zUl" firstAttribute="leading" secondItem="O1u-W8-tvY" secondAttribute="leading" constant="16" id="4UK-EX-IEU"/>
+                            <constraint firstItem="O1u-W8-tvY" firstAttribute="trailing" secondItem="9MB-C9-zUl" secondAttribute="trailing" constant="16" id="B2Z-k2-dzs"/>
+                            <constraint firstItem="9MB-C9-zUl" firstAttribute="top" secondItem="pjV-K3-kv5" secondAttribute="bottom" constant="8" id="DQn-J4-yb1"/>
                             <constraint firstItem="1bh-t9-eVT" firstAttribute="trailing" secondItem="O1u-W8-tvY" secondAttribute="trailing" id="GW7-fl-qxc"/>
                             <constraint firstItem="DAf-Zp-03A" firstAttribute="leading" secondItem="O1u-W8-tvY" secondAttribute="leading" constant="16" id="IOd-5N-e6x"/>
+                            <constraint firstItem="DAf-Zp-03A" firstAttribute="top" secondItem="9MB-C9-zUl" secondAttribute="bottom" id="N2r-JS-8W3"/>
                             <constraint firstItem="1bh-t9-eVT" firstAttribute="leading" secondItem="O1u-W8-tvY" secondAttribute="leading" id="X1A-Mt-fK3"/>
                             <constraint firstItem="O1u-W8-tvY" firstAttribute="trailing" secondItem="DAf-Zp-03A" secondAttribute="trailing" constant="16" id="Xd6-MX-9aT"/>
                             <constraint firstItem="pjV-K3-kv5" firstAttribute="top" secondItem="1bh-t9-eVT" secondAttribute="bottom" id="gnS-D8-fDQ"/>
                             <constraint firstItem="pjV-K3-kv5" firstAttribute="leading" secondItem="O1u-W8-tvY" secondAttribute="leading" id="hwh-1l-CdB"/>
                             <constraint firstItem="pjV-K3-kv5" firstAttribute="trailing" secondItem="O1u-W8-tvY" secondAttribute="trailing" id="lZm-Co-vkh"/>
                             <constraint firstItem="1bh-t9-eVT" firstAttribute="top" secondItem="O1u-W8-tvY" secondAttribute="top" id="xiK-sf-Pmm"/>
-                            <constraint firstItem="DAf-Zp-03A" firstAttribute="top" secondItem="pjV-K3-kv5" secondAttribute="bottom" constant="8" id="yr7-wR-J6P"/>
                             <constraint firstItem="DAf-Zp-03A" firstAttribute="bottom" secondItem="O1u-W8-tvY" secondAttribute="bottom" id="z1E-Qr-MHT"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="O1u-W8-tvY"/>
@@ -289,6 +309,7 @@ accuracy:</string>
                     <connections>
                         <outlet property="dataTextView" destination="pjV-K3-kv5" id="CAJ-7C-UiJ"/>
                         <outlet property="readDataButton" destination="DAf-Zp-03A" id="vYP-6x-StH"/>
+                        <outlet property="shareBBI" destination="MCi-RP-C2A" id="7s3-8u-8EJ"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="4Nw-L8-lE0" sceneMemberID="firstResponder"/>
