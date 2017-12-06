@@ -29,7 +29,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        if let myName = DataStore.getMyBluetoothPeripheralName() {
+        if let myName = DataStore.getMyDevicePeripheralName() {
             let titleLabel = UILabel(frame: CGRect.zero)
             titleLabel.text = myName
             titleLabel.sizeToFit()
@@ -40,7 +40,7 @@ class HomeViewController: UIViewController, UITableViewDelegate, UITableViewData
             let inputAction = UIAlertAction(title: "Save", style: .default, handler: { alert in
                 let textField = nameAlertCon.textFields![0] as UITextField
                 if let text = textField.text {
-                    DataStore.saveMyBluetoothPeripheralName(text)
+                    DataStore.saveMyDeviceName(text)
                     let titleLabel = UILabel(frame: CGRect.zero)
                     titleLabel.text = text
                     titleLabel.sizeToFit()

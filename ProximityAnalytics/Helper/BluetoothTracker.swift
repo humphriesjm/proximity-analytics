@@ -320,7 +320,7 @@ extension BlueToothTracker: CBPeripheralManagerDelegate {
             self.service!.characteristics = [self.characteristic!]
             self.btPeripheralManager?.add(self.service!)
             var myDeviceName = "Device \(arc4random_uniform(100))"
-            if let myName = DataStore.getMyBluetoothPeripheralName() {
+            if let myName = DataStore.getMyDevicePeripheralName() {
                 myDeviceName = myName
             }
             let advertisementDict = [ CBAdvertisementDataServiceUUIDsKey : [self.service!.uuid], CBAdvertisementDataLocalNameKey: myDeviceName ] as [String : Any]

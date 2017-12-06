@@ -10,5 +10,5 @@ import Foundation
 
 class Constants: NSObject {
     // DataStore
-    static let MyBluetoothPeripheralNameKey = "com.humphries.proximity-analytics.userdefaults.myperipheralname"
+    static let MyDeviceNameKey = "com.humphries.proximity-analytics.userdefaults.myperipheralname"
 }

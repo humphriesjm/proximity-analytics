@@ -48,6 +48,7 @@ class MotionViewController: UIViewController {
         let accelY = accelData.y.shortValue
         let accelZ = accelData.z.shortValue
         let rotation = atan2(accelData.x, accelData.y) - .pi
+        let accelerationDataObject = AccelerationData(x: accelData.x, y: accelData.y, z: accelData.z, rotation: rotation)
         print("Accelerometer Update: [x:\(accelX), y:\(accelY), z:\(accelZ)], rotation: \(MotionTracker.degrees(rotation).shortValue)")
         self.accelerationLabel.text = "x: \(accelX)\ny:\(accelY)\naccelZ:\(accelZ)\nrotation:\(MotionTracker.degrees(rotation).shortValue)"
 
@@ -56,6 +57,7 @@ class MotionViewController: UIViewController {
         let roll = MotionTracker.degrees(attitude.roll).shortValue
         let pitch = MotionTracker.degrees(attitude.pitch).shortValue
         let yaw = MotionTracker.degrees(attitude.yaw).shortValue
+        let eulerDataObject = EulerData(roll: MotionTracker.degrees(attitude.roll), pitch: MotionTracker.degrees(attitude.pitch), yaw: MotionTracker.degrees(attitude.yaw))
         print("Roll: \(roll), Pitch: \(pitch), Yaw: \(yaw)")
         self.eulerLabel.text = "roll: \(roll)\npitch:\(pitch)\nyaw:\(yaw)"
 
@@ -66,6 +68,7 @@ class MotionViewController: UIViewController {
         let magY = magneticData.field.y.shortValue
         let magZ = magneticData.field.z.shortValue
         let magAccuracy = magneticData.accuracy.rawValue
+        let magneticDataObject = MagneticData(x: magneticData.field.x, y: magneticData.field.y, z: magneticData.field.z, accuracy: Double(magAccuracy))
         var magAccString = "Uncalibrated"
         if magAccuracy == 0 {
             magAccString = "Low"
@@ -76,6 +79,8 @@ class MotionViewController: UIViewController {
         }
         print("MAG - x: \(magX), y: \(magY), z: \(magZ), accuracy: \(magAccString)")
         self.magneticLabel.text = "x: \(magX)\ny: \(magY)\nz: \(magZ)\naccuracy: \(magAccString)"
+        
+        DataStore.sharedInstance.saveMotionDataJSON(accelerationData: accelerationDataObject, eulerData: eulerDataObject, magneticData: magneticDataObject)
     }
 
 }

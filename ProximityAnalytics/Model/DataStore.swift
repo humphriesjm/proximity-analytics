@@ -16,13 +16,16 @@ import Foundation
 typealias RSSIJSONData = [ String : [ String : Int ] ]
 
 // array of JSON objects that show this device's acceleration data over time
-// 2) [ { timestamp : accelerationData } ]
+// 2) [ deviceName: { timestamp : [ { "x" : accelerationX, "y" : accelerationY, "z" : accelerationZ, "rotation" : rotation } ] } ]
+typealias AccelerationJSONData = [ String : [ String : [ [ String : Double ] ] ] ]
 
 // array of JSON objects that show this device's pitch, roll, and yaw over time
-// 3) [ { timestamp : eulers (pitch, roll, yaw) } ]
+// 3) [ deviceName:  { timestamp : [ { "roll" : roll, "pitch" : pitch, "yaw" : yaw } ] } ]
+typealias EulerJSONData = [ String : [ String : [ [ String : Double ] ] ] ]
 
 // array of JSON objects that show this device's magnetic data over time
-// 4) [ { timestamp : magneticData } ]
+// 4) [ deviceName: { timestamp : [ { "x" : magneticX, "y" : magneticY, "z" : magneticZ, "accuracy" : accuracy } ] } ]
+typealias MagneticJSONData = [ String : [ String : [ [ String : Double ] ] ] ]
 
 
 class DataStore: NSObject {
@@ -30,6 +33,14 @@ class DataStore: NSObject {
     static let sharedInstance: DataStore = {
         return DataStore()
     }()
+    
+    var accelerationJSONData = [AccelerationJSONData]()
+    var eulerJSONData = [EulerJSONData]()
+    var magneticJSONData = [MagneticJSONData]()
+    
+    var accelerationWriteCount = 0
+    var eulerWriteCount = 0
+    var magneticWriteCount = 0
     
     //MARK: DiscoveredPeripherals
     
@@ -59,13 +70,13 @@ class DataStore: NSObject {
     
     static let userDefaults = UserDefaults.standard
     
-    static func saveMyBluetoothPeripheralName(_ name: String) {
-        userDefaults.set(name, forKey: Constants.MyBluetoothPeripheralNameKey)
+    static func saveMyDeviceName(_ name: String) {
+        userDefaults.set(name, forKey: Constants.MyDeviceNameKey)
         userDefaults.synchronize()
     }
     
-    static func getMyBluetoothPeripheralName() -> String? {
-        if let name = userDefaults.string(forKey: Constants.MyBluetoothPeripheralNameKey) {
+    static func getMyDevicePeripheralName() -> String? {
+        if let name = userDefaults.string(forKey: Constants.MyDeviceNameKey) {
             return name
         }
         return nil
@@ -163,6 +174,156 @@ class DiscoveredPeripheral: NSObject {
             }
         } catch {
             print("**** ERROR READING RSSI FILE!! error: \(error.localizedDescription)")
+        }
+        return nil
+    }
+}
+
+class AccelerationData {
+    let x: Double
+    let y: Double
+    let z: Double
+    let rotation: Double
+    let timestampString: String
+    
+    init(x: Double, y: Double, z: Double, rotation: Double) {
+        self.x = x
+        self.y = y
+        self.z = z
+        self.rotation = rotation
+        self.timestampString = String(format:"%.2f", Date().timeIntervalSince1970)
+    }
+}
+
+class EulerData {
+    let roll: Double
+    let pitch: Double
+    let yaw: Double
+    let timestampString: String
+
+    init(roll: Double, pitch: Double, yaw: Double) {
+        self.roll = roll
+        self.pitch = pitch
+        self.yaw = yaw
+        self.timestampString = String(format:"%.2f", Date().timeIntervalSince1970)
+    }
+}
+
+class MagneticData {
+    let x: Double
+    let y: Double
+    let z: Double
+    let accuracy: Double
+    let timestampString: String
+
+    init(x: Double, y: Double, z: Double, accuracy: Double) {
+        self.x = x
+        self.y = y
+        self.z = z
+        self.accuracy = accuracy
+        self.timestampString = String(format:"%.2f", Date().timeIntervalSince1970)
+    }
+}
+
+
+
+extension DataStore {
+
+    //MARK: Disk write/read JSON
+
+    func accelerationFilePathURL() -> URL {
+        let manager = FileManager.default
+        let url = manager.urls(for: .documentDirectory, in: .userDomainMask).first
+        let deviceName = DataStore.getMyDevicePeripheralName() ?? "Unknown"
+        return url!.appendingPathComponent("Data-\(deviceName)-acceleration.json")
+    }
+
+    func eulerFilePathURL() -> URL {
+        let manager = FileManager.default
+        let url = manager.urls(for: .documentDirectory, in: .userDomainMask).first
+        let deviceName = DataStore.getMyDevicePeripheralName() ?? "Unknown"
+        return url!.appendingPathComponent("Data-\(deviceName)-euler.json")
+    }
+
+    func magneticFilePathURL() -> URL {
+        let manager = FileManager.default
+        let url = manager.urls(for: .documentDirectory, in: .userDomainMask).first
+        let deviceName = DataStore.getMyDevicePeripheralName() ?? "Unknown"
+        return url!.appendingPathComponent("Data-\(deviceName)-magnetic.json")
+    }
+
+    func saveMotionDataJSON(accelerationData: AccelerationData, eulerData: EulerData, magneticData: MagneticData) {
+        let deviceName = DataStore.getMyDevicePeripheralName() ?? "Unknown"
+        
+        let accelerationJSONObject: AccelerationJSONData = [ deviceName : [ accelerationData.timestampString : [ [ "x" : accelerationData.x, "y" : accelerationData.y, "z" : accelerationData.z, "rotation" : accelerationData.rotation ] ] ] ]
+        self.accelerationJSONData.append(accelerationJSONObject)
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: self.accelerationJSONData, options: [])
+            try data.write(to: self.accelerationFilePathURL(), options: [])
+            print("-- jsonData SAVING acceleration data: \(NSString(data: data, encoding: 1)!)")
+        } catch {
+            print("**** ERROR WRITING ACCELERATION JSON TO DISK!! error: \(error.localizedDescription)")
+        }
+
+        let eulerJSONObject: EulerJSONData = [ deviceName : [ eulerData.timestampString : [ [ "roll" : eulerData.roll, "pitch" : eulerData.pitch, "yaw" : eulerData.yaw ] ] ] ]
+        self.eulerJSONData.append(eulerJSONObject)
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: self.eulerJSONData, options: [])
+            try data.write(to: self.eulerFilePathURL(), options: [])
+            print("-- jsonData SAVING euler data: \(NSString(data: data, encoding: 1)!)")
+        } catch {
+            print("**** ERROR WRITING EULER MOTION JSON TO DISK!! error: \(error.localizedDescription)")
+        }
+
+        let magneticJSONObject: MagneticJSONData = [ deviceName : [ magneticData.timestampString : [ [ "x" : magneticData.x, "y" : magneticData.y, "z" : magneticData.z, "accuracy" : magneticData.accuracy ] ] ] ]
+        self.magneticJSONData.append(magneticJSONObject)
+
+        do {
+            let data = try JSONSerialization.data(withJSONObject: self.magneticJSONData, options: [])
+            try data.write(to: self.magneticFilePathURL(), options: [])
+            print("-- jsonData SAVING magnetic data: \(NSString(data: data, encoding: 1)!)")
+        } catch {
+            print("**** ERROR WRITING MAGNETIC JSON TO DISK!! error: \(error.localizedDescription)")
+        }
+    }
+        
+    func readAccelerationDataJSON() -> [AccelerationJSONData]? {
+        do {
+            let data = try Data(contentsOf: self.accelerationFilePathURL(), options: [])
+            if let dataArray = try JSONSerialization.jsonObject(with: data, options: []) as? [AccelerationJSONData] {
+                print("-- jsonData READING acceleration data: \(dataArray)")
+                return dataArray
+            }
+        } catch {
+            print("**** ERROR READING ACCELERATION FILE!! error: \(error.localizedDescription)")
+        }
+        return nil
+    }
+    
+    func readEulerDataJSON() -> [EulerJSONData]? {
+        do {
+            let data = try Data(contentsOf: self.eulerFilePathURL(), options: [])
+            if let dataArray = try JSONSerialization.jsonObject(with: data, options: []) as? [EulerJSONData] {
+                print("-- jsonData READING euler data: \(dataArray)")
+                return dataArray
+            }
+        } catch {
+            print("**** ERROR READING EULER FILE!! error: \(error.localizedDescription)")
+        }
+        return nil
+    }
+    
+    func readMagneticDataJSON() -> [MagneticJSONData]? {
+        do {
+            let data = try Data(contentsOf: self.magneticFilePathURL(), options: [])
+            if let dataArray = try JSONSerialization.jsonObject(with: data, options: []) as? [MagneticJSONData] {
+                print("-- jsonData READING magnetic data: \(dataArray)")
+                return dataArray
+            }
+        } catch {
+            print("**** ERROR READING MAGNETIC FILE!! error: \(error.localizedDescription)")
         }
         return nil
     }
