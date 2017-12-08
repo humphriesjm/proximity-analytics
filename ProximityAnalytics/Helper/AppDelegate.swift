@@ -7,6 +7,8 @@
 //
 
 import CoreBluetooth
+import Crashlytics
+import Fabric
 import UIKit
 
 @UIApplicationMain
@@ -20,6 +22,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         //let centralManagerIdentifiers = launchOptions![UIApplicationLaunchOptionsKey.bluetoothCentrals]
         let opts = [CBCentralManagerOptionShowPowerAlertKey: true, CBCentralManagerOptionRestoreIdentifierKey: "bluetoothCentralRestoreKey"] as [String : Any]
         BlueToothTracker.sharedInstance.btCentralManager = CBCentralManager(delegate: BlueToothTracker.sharedInstance, queue: nil, options: opts)
+        
+        Fabric.with([Crashlytics.self])
         
         return true
     }

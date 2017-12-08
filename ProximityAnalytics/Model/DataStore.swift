@@ -13,19 +13,19 @@ import Foundation
 
 // array of JSON objects that associate a device name with the rssi over time
 // 1) [ deviceName { timestamp : rssi } ]
-typealias RSSIJSONData = [ String : [ String : Int ] ]
+typealias RSSIJSONData = [ String : [ String : Any ] ]
 
 // array of JSON objects that show this device's acceleration data over time
 // 2) [ deviceName: { timestamp : [ { "x" : accelerationX, "y" : accelerationY, "z" : accelerationZ, "rotation" : rotation } ] } ]
-typealias AccelerationJSONData = [ String : [ String : [ [ String : Double ] ] ] ]
+typealias AccelerationJSONData = [ String : [ String : Any ] ]
 
 // array of JSON objects that show this device's pitch, roll, and yaw over time
 // 3) [ deviceName:  { timestamp : [ { "roll" : roll, "pitch" : pitch, "yaw" : yaw } ] } ]
-typealias EulerJSONData = [ String : [ String : [ [ String : Double ] ] ] ]
+typealias EulerJSONData = [ String : [ String : Any ] ]
 
 // array of JSON objects that show this device's magnetic data over time
-// 4) [ deviceName: { timestamp : [ { "x" : magneticX, "y" : magneticY, "z" : magneticZ, "accuracy" : accuracy } ] } ]
-typealias MagneticJSONData = [ String : [ String : [ [ String : Double ] ] ] ]
+// 4) [ deviceName: { "timestamp" : "12313131231", "x" : magneticX, "y" : magneticY, "z" : magneticZ, "accuracy" : accuracy } ]
+typealias MagneticJSONData = [ String : [ String : Any ] ]
 
 
 class DataStore: NSObject {
@@ -94,9 +94,57 @@ class DataStore: NSObject {
             print("json urls:", jsonFiles)
             try jsonFiles.forEach({ fileURL in
                 let data = try Data(contentsOf: fileURL, options: [])
-                if let personArray = try JSONSerialization.jsonObject(with: data, options: []) as? [RSSIJSONData] {
-                    print("-- jsonData READING: \(personArray)")
-                    returnText.append("\(personArray)\n\n")
+                if fileURL.absoluteString.contains("rssi") {
+                    if let rssiJsonData = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [RSSIJSONData] {
+                        do {
+                            let jsonData = try JSONSerialization.data(withJSONObject: rssiJsonData, options: [])
+                            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                                print("-- jsonData READING rssi file: \(jsonString)")
+                                returnText.append("RSSI DATA:\n\(jsonString)\n\n")
+                            }
+                        } catch {
+                            print(error)
+                        }
+                    }
+                }
+                if fileURL.absoluteString.contains("magnetic") {
+                    if let magneticJsonData = try JSONSerialization.jsonObject(with: data, options: []) as? [MagneticJSONData] {
+                        do {
+                            let jsonData = try JSONSerialization.data(withJSONObject: magneticJsonData, options: [])
+                            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                                print("-- jsonData READING magnetic file: \(jsonString)")
+                                returnText.append("MAGNETIC DATA:\n\(jsonString)\n\n")
+                            }
+                        } catch {
+                            print(error)
+                        }
+                    }
+                }
+                if fileURL.absoluteString.contains("euler") {
+                    if let eulerJsonData = try JSONSerialization.jsonObject(with: data, options: []) as? [EulerJSONData] {
+                        do {
+                            let jsonData = try JSONSerialization.data(withJSONObject: eulerJsonData, options: [])
+                            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                                print("-- jsonData READING euler file: \(jsonString)")
+                                returnText.append("EULER DATA:\n\(jsonString)\n\n")
+                            }
+                        } catch {
+                            print(error)
+                        }
+                    }
+                }
+                if fileURL.absoluteString.contains("acceleration") {
+                    if let accelerationJsonData = try JSONSerialization.jsonObject(with: data, options: []) as? [AccelerationJSONData] {
+                        do {
+                            let jsonData = try JSONSerialization.data(withJSONObject: accelerationJsonData, options: [])
+                            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                                print("-- jsonData READING acceleration file: \(jsonString)")
+                                returnText.append("ACCELERATION DATA:\n\(jsonString)\n\n")
+                            }
+                        } catch {
+                            print(error)
+                        }
+                    }
                 }
             })
             let jsonFileNames = jsonFiles.map{ $0.deletingPathExtension().lastPathComponent }
@@ -138,7 +186,7 @@ class DiscoveredPeripheral: NSObject {
     var filePathURL: URL {
         let manager = FileManager.default
         let url = manager.urls(for: .documentDirectory, in: .userDomainMask).first
-        return url!.appendingPathComponent("Data-\(self.deviceName)-\(self.identifier.prefix(4)).json")
+        return url!.appendingPathComponent("Data-\(self.deviceName)-\(self.identifier.prefix(4))-rssi.json")
     }
     
     var filePath: String {
@@ -152,14 +200,14 @@ class DiscoveredPeripheral: NSObject {
         }
         
         for (index, element) in self.rssiValues.enumerated() {
-            let rssiItemObject: RSSIJSONData = [ self.deviceName : [ String(format:"%.2f", self.timeValues[index]) : element ] ]
+            let rssiItemObject: RSSIJSONData = [ self.deviceName : [ "timestamp" : String(format:"%.2f", self.timeValues[index]), "rssi" : element ] ]
             self.rssiJSONDataToWrite.append(rssiItemObject)
         }
         
         do {
             let data = try JSONSerialization.data(withJSONObject: self.rssiJSONDataToWrite, options: [])
             try data.write(to: self.filePathURL, options: [])
-            print("-- jsonData SAVING: \(NSString(data: data, encoding: 1)!)")
+            print("-- jsonData SAVING rssi data: \(NSString(data: data, encoding: 1)!)")
         } catch {
             print("**** ERROR WRITING RSSI JSON TO DISK!! error: \(error.localizedDescription)")
         }
@@ -168,7 +216,7 @@ class DiscoveredPeripheral: NSObject {
     func readDataJSON() -> [RSSIJSONData]? {
         do {
             let data = try Data(contentsOf: self.filePathURL, options: [])
-            if let personArray = try JSONSerialization.jsonObject(with: data, options: []) as? [RSSIJSONData] {
+            if let personArray = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as? [RSSIJSONData] {
                 print("-- jsonData READING: \(personArray)")
                 return personArray
             }
@@ -255,7 +303,7 @@ extension DataStore {
     func saveMotionDataJSON(accelerationData: AccelerationData, eulerData: EulerData, magneticData: MagneticData) {
         let deviceName = DataStore.getMyDevicePeripheralName() ?? "Unknown"
         
-        let accelerationJSONObject: AccelerationJSONData = [ deviceName : [ accelerationData.timestampString : [ [ "x" : accelerationData.x, "y" : accelerationData.y, "z" : accelerationData.z, "rotation" : accelerationData.rotation ] ] ] ]
+        let accelerationJSONObject: AccelerationJSONData = [ deviceName : [ "timestamp" : accelerationData.timestampString, "x" : accelerationData.x, "y" : accelerationData.y, "z" : accelerationData.z, "rotation" : accelerationData.rotation ] ]
         self.accelerationJSONData.append(accelerationJSONObject)
 
         do {
@@ -266,7 +314,7 @@ extension DataStore {
             print("**** ERROR WRITING ACCELERATION JSON TO DISK!! error: \(error.localizedDescription)")
         }
 
-        let eulerJSONObject: EulerJSONData = [ deviceName : [ eulerData.timestampString : [ [ "roll" : eulerData.roll, "pitch" : eulerData.pitch, "yaw" : eulerData.yaw ] ] ] ]
+        let eulerJSONObject: EulerJSONData = [ deviceName : [ "timestamp" : eulerData.timestampString, "roll" : eulerData.roll, "pitch" : eulerData.pitch, "yaw" : eulerData.yaw ] ]
         self.eulerJSONData.append(eulerJSONObject)
 
         do {
@@ -277,7 +325,7 @@ extension DataStore {
             print("**** ERROR WRITING EULER MOTION JSON TO DISK!! error: \(error.localizedDescription)")
         }
 
-        let magneticJSONObject: MagneticJSONData = [ deviceName : [ magneticData.timestampString : [ [ "x" : magneticData.x, "y" : magneticData.y, "z" : magneticData.z, "accuracy" : magneticData.accuracy ] ] ] ]
+        let magneticJSONObject: MagneticJSONData = [ deviceName : [ "timestamp" : magneticData.timestampString, "x" : magneticData.x, "y" : magneticData.y, "z" : magneticData.z, "accuracy" : magneticData.accuracy ] ]
         self.magneticJSONData.append(magneticJSONObject)
 
         do {
