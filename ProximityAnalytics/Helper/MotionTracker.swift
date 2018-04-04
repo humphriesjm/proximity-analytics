@@ -19,7 +19,25 @@ class MotionTracker: NSObject {
        return CMMotionManager()
     }()
     
+    override init() {
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(appDidEnterBackground),
+                                               name: .UIApplicationDidEnterBackground,
+                                               object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(appDidBecomeActive),
+                                               name: .UIApplicationDidBecomeActive,
+                                               object: nil)
+    }
     
+    deinit {
+        NotificationCenter.default.removeObserver(self,
+                                                  name: .UIApplicationDidEnterBackground,
+                                                  object: nil)
+        NotificationCenter.default.removeObserver(self,
+                                                  name: .UIApplicationDidBecomeActive,
+                                                  object: nil)
+    }
     
     func startDeviceMotion(withUpdateHandler updateHandler: @escaping (CMDeviceMotion?) -> ()) {
         let motionMgr = MotionTracker.motionManager
